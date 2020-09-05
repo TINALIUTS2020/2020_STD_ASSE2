@@ -61,15 +61,21 @@ Public holiday as a supplement data set to aid more in-depth time series analysi
 
 ### Dataset import 
 
-```{r Data import and merge}
+```{r Library import}
+#install.packages("psych") 
+library(psych) 
 library(tidyverse)
 library(lubridate)
 library(readxl)
 library(knitr)
 library(data.table)
 library(dplyr)
+library(Hmisc)
 
 
+```
+
+```{r Data import and merge}
 # Import data from local
 Fuel_Jul20<-as.data.frame(read_xlsx("Fuel_2019-2020\\Fuel_price_history_checks_july2020.xlsx",1,skip=2, col_names = TRUE))%>% fill(everything(), .direction = "down")
 
@@ -79,6 +85,8 @@ Fuel_May20<-as.data.frame(read_xlsx("Fuel_2019-2020\\Fuel_price_history_checks_m
 
 NSWPublicHoliday<- read.csv("Public_Holiday_2019-2020\\australian_public_holidays_2020.csv")%>% filter(Jurisdiction=="nsw")
 
+HousePrice<- read.csv("Combined_HousePriceMayToJul20.csv")
+
 ```
 ### Dataset merge
 
@@ -87,6 +95,7 @@ To merge all data sets, we need to first combined all the subsets of Fuel price 
 ```{r Data  merge}
 
 # format date to date and rename column
+
 NSWPublicHoliday$Date<- ymd(NSWPublicHoliday$Date)
 NSWPublicHoliday<- NSWPublicHoliday%>% rename(date=Date)
 
@@ -95,8 +104,21 @@ Fuel_RAW<- rbind(Fuel_May20,Fuel_Jun20,Fuel_Jul20)
 Fuel_RAW$PriceUpdatedDate<- dmy_hms(Fuel_RAW$PriceUpdatedDate)
 Fuel_RAW$date <- as.Date(format(Fuel_RAW$PriceUpdatedDate, "%Y-%m-%d"))
 
-## merge Fuel_RAW with public holiday
+## Group house data by date
+HousePriceDay<- HousePrice %>% 
+  group_by(Settlement.Date)%>% 
+  summarise(SettlementQty=n(), 
+              AvgHousePurchasePrice = mean(Purchase.Price, na.rm=TRUE))
+
+## Format date column in house price
+HousePriceDay$Settlement.Date <- strptime(as.character(HousePriceDay$Settlement.Date), "%d/%m/%Y")
+HousePriceDay$date <- as.Date(format(HousePriceDay$Settlement.Date, "%Y-%m-%d"),"%Y-%m-%d")
+
+
+
+## merge Fuel_RAW with public holiday and HousePriceDay by date
 Fuel_All<- left_join(Fuel_RAW,NSWPublicHoliday,by="date")
+Fuel_All<-left_join(Fuel_RAW,HousePriceDay,by="date")
 
 ## sample of the merged data
 head(Fuel_All)
@@ -180,3 +202,4 @@ NSW Fuel Price - https://data.gov.au/dataset/ds-nsw-d1c82729-5d6a-4a82-876f-a6a8
 
 Public Holiday - https://data.gov.au/dataset/ds-dga-b1bc6077-dadd-4f61-9f8c-002ab2cdff10/details?q=public%20holiday 
 
+House Price - https://valuation.property.nsw.gov.au/embed/propertySalesInformation
