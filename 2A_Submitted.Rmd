@@ -1,0 +1,240 @@
+---
+title: "Assessment Task 2: Data Analysis Project- Part A"
+author: "Fuel Circle "
+date: "06/09/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Rationale and stakeholder for the project
+
+In Australia fuel prices are unregulated and set by local retailers so may fluctuate over time or region. An upside to this is it allows purchasers of fuel to “shop around” for the best price for a particular fuel on a particular day. The downside is that it opens up the possibility of market manipulation, especially in locations where competition is sparse (for instance in country towns where there are fewer stations than cities), or where retailers believe consumers are unlikely to shop around, as may occur in more affluent suburbs. There might also be some manipulation across time. For instance on or near public and school holidays when more people are likely to commute by car.
+
+We therefore will perform a detailed analysis of fuel price trends in New South Wales. We will examine price fluctuations across the state over several months to ascertain whether there are market manipulations at particular times or places to advise consumers of how to buy the best priced fuel. 
+
+We consider our potential stakeholders to be:[^1] 
+
+* The Australian Competition and Consumer Commission (ACCC)
+* Consumers of fuel
+* Petrol station
+* NRMA
+* NSW Roads and Maritime
+
+[^1]: See the Appendix for notes on each stakeholder. 
+
+
+## Research questions
+
+Our overarching question is: “What factors influence fuel prices?”
+
+Examples of sub-questions we expect to fall out of the data are in the Appendix. 
+
+
+## Range of datasets examined/chosen for the analysis
+
+To answer the broad question “what factors influence fuel prices” we have examined:
+(i) fuel price, (ii) property, and (iii) public holiday data, from various of websites. [^2]
+
+These gave us a range of spatial and temporal factors to compare against fuel prices using logistic regression and similar analytical models. We contemplated using vehicle sales data but found these to be unobtainable at the required granularity for our needs (i.e. recorded daily).
+
+The fuel price dataset is useful as it contains a range of data types, i.e. categorical data (service station, fuel type), continuous data (price update time), discrete data (fuel price) and locality at a ‘per day’ temporal scale. It is also extremely fine-grained with information attainable for specific service stations at specific times of day. This allows us to run specific inquiries on the data. Moreover, it is easily accessed as a xlsx file, can be readily stored in GitHub and committed to R for analyses.[^2]
+
+The property price data is highly detailed and is downloaded as a series of zip files. There are a many transformations needed to access the data and requires a significant investment to examine and collate and merge it with fuel price data. It is also fine gained with information down to address/postcode and day of sale. 
+
+The public holiday data serves as a useful supplementary dataset for time series examinations for querying whether the timing of public holidays coincides with changes in fuel prices, by comparing the trends in fuel prices over time relative to the timing of specific holidays. Unfortunately this dataset does not include school holidays and extended holiday periods, which would be pertinent to examine to assess how these might affect fuel prices.
+
+[^2]: See the Appendix for details.
+
+
+## Regression modelling techniques
+
+We will use linear regression model analyses (Bruce & Bruce 2017) to ascertain how fuel price, as the dependent variable, is affected by two or more independent variables (e.g. geolocation information such as house prices, or time of year). Multiple regression models (Bruce & Bruce 2017) will be used to analyse how two or more independent variables (e.g. location and number/type of stations, which may be deemed a measure of ‘local competition’) might simultaneously affect fuel prices.
+
+The influence of public holiday times on changes in fuel prices will be determined by a time series analysis of fuel prices trends over time relative to that of specified holidays.
+
+Before running the regressions and other models, diagnostics such as residual analyses or the plotting of residuals vs fitted, normal Q-Q, scale-location, and residuals vs leverage, curves will be performed. Whenever the diagnostics indicate non-compliance with any model assumptions, we will either transform any noncompliant data (e.g. log or inverse transformations) or change the model (e.g. to a generalized linear model; Kitto 2019). 
+
+
+## Anticipated issues
+
+The datasets we will use are large and data rich so we need to be aware of collinearity, which occurs when multiple predictor variables are highly correlated. Collinearity makes it difficult to estimate relationships between each of the independent variables and the dependent variable. We will thus estimate the variance inflation factor (VIF) to predict the influence of collinearity on our regression models.
+
+There might be a risk that the fuel or house price data of any given month or year, e.g. 2020 as a consequence of COVID-19 restrictions, are peculiar and/or misrepresent some trends. To account for this possibility data across 2017-2020 will be examined. Merging multiple datasets across years however runs the risk of over inflating file size, so we will independently examine the datasets for each year to independently assess what kind of anomalies might arise in any of the datasets.
+
+
+## Appendix
+
+### Code demonstrating data acquisition and merger processes
+
+The above mentioned datasets were acquired, stored (in GitHub), committed into R, and merged using the following R studio commands:
+
+The following packages and processes were uploaded to R using the commands:
+
+```{r Library import, message=FALSE, warning=FALSE}
+library(psych) 
+library(tidyverse)
+library(lubridate)
+library(readxl)
+library(knitr)
+library(data.table)
+library(dplyr)
+```
+
+#### Dataset import 
+
+```{r Data import and merge,message=FALSE, warning=FALSE}
+# Import data from local
+Fuel_Jul20<-as.data.frame(read_xlsx("Fuel_2019-2020\\Fuel_price_history_checks_july2020.xlsx",1,skip=2, col_names = TRUE))%>% fill(everything(), .direction = "down")
+
+Fuel_Jun20<-as.data.frame(read_xlsx("Fuel_2019-2020\\Fuel_price_history_checks_june2020.xlsx",1,skip=2, col_names = TRUE))%>% fill(everything(), .direction = "down")
+
+Fuel_May20<-as.data.frame(read_xlsx("Fuel_2019-2020\\Fuel_price_history_checks_may2020.xlsx",1,skip=2, col_names = TRUE))%>% fill(everything(), .direction = "down")
+
+NSWPublicHoliday<- read.csv("Public_Holiday_2019-2020\\australian_public_holidays_2020.csv")%>% filter(Jurisdiction=="nsw")
+
+HousePrice<- read.csv("Combined_HousePriceMayToJul20.csv")
+
+```
+
+#### Merge data sets 
+
+To merge all data sets, we need to first combined all the subsets of Fuel price data, then left join with the public holiday table.
+
+```{r Data  merge, message=FALSE, warning=FALSE}
+
+# format date to date and rename column
+
+NSWPublicHoliday$Date<- ymd(NSWPublicHoliday$Date)
+NSWPublicHoliday<- NSWPublicHoliday%>% rename(date=Date) 
+
+```
+
+Changed the ’Date’ column in the public holiday dataset to ‘date’. This meant the fuel price dataset and public holiday dataset now had an overlapping column that may be merged. 
+
+Before doing so, we combined the fuel and house price data for May, June and July,
+
+```{r Data  merge2, message=FALSE, warning=FALSE}
+## Combine Fuel data May to Jul 20
+Fuel_RAW<- rbind(Fuel_May20,Fuel_Jun20,Fuel_Jul20)
+Fuel_RAW$PriceUpdatedDate<- dmy_hms(Fuel_RAW$PriceUpdatedDate)
+Fuel_RAW$date <- as.Date(format(Fuel_RAW$PriceUpdatedDate, "%Y-%m-%d"))
+
+## Group house data by date
+HousePriceDay<- HousePrice %>% 
+  group_by(Settlement.Date)%>% 
+  summarise(SettlementQty=n(), 
+              AvgHousePurchasePrice = mean(Purchase.Price, na.rm=TRUE))
+
+## Format date column in house price
+HousePriceDay$Settlement.Date <- strptime(as.character(HousePriceDay$Settlement.Date), "%d/%m/%Y")
+HousePriceDay$date <- as.Date(format(HousePriceDay$Settlement.Date, "%Y-%m-%d"),"%Y-%m-%d")
+
+```
+
+This built a database of 154,980 price records from May to Jul 20 for a period of 92 days (2020-05-01 to 2020-07-31) across 2071 unique service station names with 2189 different addresses for 24 brands with 9 different fuel type. 
+
+The fuel price and public holiday data were then merged as follows: 
+
+```{r Data  merge3, message=FALSE, warning=FALSE}
+## merge Fuel_RAW with public holiday and HousePriceDay by date
+Fuel_All<- left_join(Fuel_RAW,NSWPublicHoliday,by="date")
+Fuel_All<-left_join(Fuel_RAW,HousePriceDay,by="date")
+
+## sample of the merged data
+head(Fuel_All)
+
+```
+
+As some of the service stations had the same name but were at different locations we differentiated these by: 
+
+```{r Data edm2, message=FALSE, warning=FALSE}
+ServiceStationList<-Fuel_All%>%
+  select("ServiceStationName","Address", "Suburb","Postcode")%>%
+  unique()
+
+head(group_by(ServiceStationList,ServiceStationName)%>%count()%>%arrange(-n),10)
+
+head(group_by(ServiceStationList,Address)%>%count()%>%arrange(-n),10)
+
+```
+
+Some of the ServiceStationName cells had multiple addresses, for example the service station "Caltex Armidale" has 4 addresses, and some of the addresses had multiple service station names.
+
+We thus checked if stations with the same addresses could be merged as follows.
+
+```{r Data edm3, message=FALSE, warning=FALSE}
+DuplicateAddress <- ServiceStationList[duplicated(ServiceStationList$Address),]%>%select(Address)
+data_list <- as.vector(DuplicateAddress[,1])
+StationsToChk <- Fuel_All[Fuel_All$Address %in% data_list,]
+
+head(StationsToChk,5)
+write.csv(StationsToChk,"StationsToChk.csv")
+
+```
+
+Assuming we decided not to merge any service stations by addresses, next step will be to build a primary location key for analysis to a station level.
+
+```{r Data edm4, message=FALSE, warning=FALSE}
+ServiceStationList$LocationKey <- paste(ServiceStationList$ServiceStationName,ServiceStationList$Address)
+Fuel_All$LocationKey<- paste(Fuel_All$ServiceStationName,Fuel_All$Address)
+
+head(Fuel_All)
+
+```
+
+
+### Notes on stakeholders
+
+The ACCC are constantly monitoring fuel prices for any market manipulation and intentional overpricing (ACCC 2007).
+
+Consumers of fuel want to know where to find the best priced fuel in their region at any given time.
+
+Petrol stations want to know if there is price manipulation happening among their competitors.
+
+The NRMA advise their members of the best value fuel providers.
+
+NSW Roads and Maritime are interested in fuel prices since there are implications for the development of public transport systems.
+
+Sub-questions that can be asked using our datasets
+
+1. How does price compare across New South Wales and what factors determine
+the fuel price?
+
+2. Do house price correlate with fuel price across NSW?
+
+3. Which day of the week has the cheapest fuel price?
+
+4. What day should we buy fuel before a holiday?
+
+5. How does competition and/or the number of individual providers affect fuel
+price? 
+
+
+### Dataset websites
+
+Fuel price data:
+https://data.gov.au/dataset/ds-nsw-d1c82729-5d6a-4a82-876f a6a845e7b9f4/details?q=petrol%20nsw
+
+Property price data/API:
+https://valuation.property.nsw.gov.au/embed/propertySalesInformation
+
+Public holiday data/API:
+https://data.gov.au/dataset/ds-dga-b1bc6077-dadd-4f61-9f8c-002ab2cdff10/details?q=public%20holiday. 
+
+
+## Reference
+
+ACCC (2007). Petrol prices and Australian consumers. Report to the Common
+wealth of Australia. Canberra.
+https://www.accc.gov.au/regulated-infrastructure/fuel/acccs-fuel-monitoring-role
+
+Bruce, P., & Bruce, A. (2017). Practical Statistics for Data Scientists: 50 Essential
+Concepts. O'Reilly Media, Inc.
+
+Kitto, L. (2019). Advanced Regression Models. University of technology Sydney. 
+
+
