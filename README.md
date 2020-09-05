@@ -1,5 +1,10 @@
 # 2020_STD_ASSE2
 Our repository for STD Assignment 2
+
+Group members:
+
+Group members:
+
 Our group name: Fuel Circle
 
 
