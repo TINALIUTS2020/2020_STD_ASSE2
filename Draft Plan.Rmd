@@ -62,8 +62,8 @@ Public holiday as a supplement data set to aid more in-depth time series analysi
 ### Dataset import 
 
 ```{r Library import}
-#install.packages("pysch") # package ‘pysch’ is not available (for R version 4.0.2)
-# library(pysch) # package ‘pysch’ is not available (for R version 4.0.2)
+#install.packages("psych") 
+library(psych) 
 library(tidyverse)
 library(lubridate)
 library(readxl)
@@ -71,6 +71,8 @@ library(knitr)
 library(data.table)
 library(dplyr)
 library(Hmisc)
+
+
 ```
 
 ```{r Data import and merge}
@@ -200,3 +202,4 @@ NSW Fuel Price - https://data.gov.au/dataset/ds-nsw-d1c82729-5d6a-4a82-876f-a6a8
 
 Public Holiday - https://data.gov.au/dataset/ds-dga-b1bc6077-dadd-4f61-9f8c-002ab2cdff10/details?q=public%20holiday 
 
+House Price - https://valuation.property.nsw.gov.au/embed/propertySalesInformation
