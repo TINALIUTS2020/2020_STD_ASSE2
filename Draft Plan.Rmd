@@ -61,15 +61,17 @@ Public holiday as a supplement data set to aid more in-depth time series analysi
 
 ### Dataset import 
 
-```{r Data import and merge}
+```{r Library import}
 library(tidyverse)
 library(lubridate)
 library(readxl)
 library(knitr)
 library(data.table)
 library(dplyr)
+library(pysch)
+```
 
-
+```{r Data import and merge}
 # Import data from local
 Fuel_Jul20<-as.data.frame(read_xlsx("Fuel_2019-2020\\Fuel_price_history_checks_july2020.xlsx",1,skip=2, col_names = TRUE))%>% fill(everything(), .direction = "down")
 
