@@ -15,9 +15,6 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r Introduction}
-summary(cars)
-```
 rationale and stakeholders for the project
 
 ## The rationale and stakeholders for the project
@@ -39,10 +36,6 @@ Stakeholders:
     ACCC could be a stakeholder.
     Treasury
     Welfare groupcategorical datas
-
-```{r Rationale}
-summary(cars)
-```
 
 
 ## The range of datasets examined as well as those chosen for the analysis (include details about how you merged the different datasets and an assessment on whether the granularity of the data sources is sufficient to answer your research questions)
@@ -176,25 +169,11 @@ head(Fuel_All)
 
 You can also embed plots, for example:
 
-```{r modelling}
-summary(cars)
-```
-
 ## any issues that you anticipate might arise in carrying out the project
 
 You can also embed plots, for example:
 
-```{r issues}
-summary(cars)
-```
-
 ## Include an Appendix that contains code samples demonstrating the data acquisition and merger processes that you have used to date
-
-You can also embed plots, for example:
-
-```{r Appendix}
-summary(cars)
-```
 
 
 ## Reference
