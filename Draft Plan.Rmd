@@ -62,13 +62,15 @@ Public holiday as a supplement data set to aid more in-depth time series analysi
 ### Dataset import 
 
 ```{r Library import}
+#install.packages("pysch") # package ‘pysch’ is not available (for R version 4.0.2)
+# library(pysch) # package ‘pysch’ is not available (for R version 4.0.2)
 library(tidyverse)
 library(lubridate)
 library(readxl)
 library(knitr)
 library(data.table)
 library(dplyr)
-library(pysch)
+library(Hmisc)
 ```
 
 ```{r Data import and merge}
@@ -81,6 +83,8 @@ Fuel_May20<-as.data.frame(read_xlsx("Fuel_2019-2020\\Fuel_price_history_checks_m
 
 NSWPublicHoliday<- read.csv("Public_Holiday_2019-2020\\australian_public_holidays_2020.csv")%>% filter(Jurisdiction=="nsw")
 
+HousePrice<- read.csv("Combined_HousePriceMayToJul20.csv")
+
 ```
 ### Dataset merge
 
@@ -89,6 +93,7 @@ To merge all data sets, we need to first combined all the subsets of Fuel price 
 ```{r Data  merge}
 
 # format date to date and rename column
+
 NSWPublicHoliday$Date<- ymd(NSWPublicHoliday$Date)
 NSWPublicHoliday<- NSWPublicHoliday%>% rename(date=Date)
 
@@ -97,8 +102,21 @@ Fuel_RAW<- rbind(Fuel_May20,Fuel_Jun20,Fuel_Jul20)
 Fuel_RAW$PriceUpdatedDate<- dmy_hms(Fuel_RAW$PriceUpdatedDate)
 Fuel_RAW$date <- as.Date(format(Fuel_RAW$PriceUpdatedDate, "%Y-%m-%d"))
 
-## merge Fuel_RAW with public holiday
+## Group house data by date
+HousePriceDay<- HousePrice %>% 
+  group_by(Settlement.Date)%>% 
+  summarise(SettlementQty=n(), 
+              AvgHousePurchasePrice = mean(Purchase.Price, na.rm=TRUE))
+
+## Format date column in house price
+HousePriceDay$Settlement.Date <- strptime(as.character(HousePriceDay$Settlement.Date), "%d/%m/%Y")
+HousePriceDay$date <- as.Date(format(HousePriceDay$Settlement.Date, "%Y-%m-%d"),"%Y-%m-%d")
+
+
+
+## merge Fuel_RAW with public holiday and HousePriceDay by date
 Fuel_All<- left_join(Fuel_RAW,NSWPublicHoliday,by="date")
+Fuel_All<-left_join(Fuel_RAW,HousePriceDay,by="date")
 
 ## sample of the merged data
 head(Fuel_All)
