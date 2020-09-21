@@ -1,4 +1,4 @@
-# 2020_STD_ASSE2
+# 2020_STD_ASSE2 - DEPRECATED
 Our repository for STD Assignment 2
 
 Group members:
