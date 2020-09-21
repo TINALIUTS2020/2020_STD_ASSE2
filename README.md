@@ -18,3 +18,5 @@ https://data.gov.au/dataset/ds-dga-b1bc6077-dadd-4f61-9f8c-002ab2cdff10/details?
 
 House Price
 https://valuation.property.nsw.gov.au/embed/propertySalesInformation
+
+This repo is NO LONGER Updated. Please use https://github.com/JoeTristram/STDS_SPR_20 instead
